@@ -3,3 +3,7 @@ __pycache__/
 *.pt
 *.npz
 data/
+*.log
+.gpu.lock
+.pyramid/pids
+.selfcheck_tmp/
