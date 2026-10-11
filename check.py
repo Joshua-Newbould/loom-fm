@@ -130,7 +130,7 @@ def iter_(a):
     sec = re.search(rf'^## iter {k}\s*$(.*?)(?=^## |\Z)', notes.read_text() if notes.exists() else '', re.S | re.M)
     return ([] if rs else [f'iter {k}: no rows with tag iter{k}']) + [e for r in rs for e in rec_errs(r)] + (
         [f'iter {k} section lacks a "{w}:" line' for w in ('hypothesis', 'result', 'next') if not re.search(rf'^{w}:', sec[1], re.M)] if sec else [f'NOTES.md has no "## iter {k}" section'])
-fam = lambda r: 'dense' if r['cfg']['experts'] == 0 and r['cfg']['loops'] == 1 else 'loom'
+fam = lambda r: 'loom' if r['cfg']['experts'] else ('dense' if r['cfg']['loops'] == 1 else 'looped')
 def pareto(a):
     errs, rs = [], [r for r in rows() if r.get('tag') == 'sweep']
     try:
@@ -138,7 +138,7 @@ def pareto(a):
     except (OSError, ValueError, KeyError) as e:
         return [f'pareto: cannot read pareto.json / site/data.json ({e.__class__.__name__})']
     for ds in ('mnist', 'cifar'):
-        for f in ('dense', 'loom'):
+        for f in ('dense', 'looped', 'loom'):
             v = [r for r in rs if r['dataset'] == ds and fam(r) == f]
             fr = [r for r in v if not any(o['params'] <= r['params'] and o['fid'] <= r['fid'] and (o['params'], o['fid']) != (r['params'], r['fid']) for o in v)]
             if len(v) < 4: errs.append(f'{ds}/{f}: {len(v)} sweep rows < 4')

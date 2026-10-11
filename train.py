@@ -119,12 +119,12 @@ def queue(a):
 def pareto(a):
     rs = [json.loads(l) for l in (R / 'results.jsonl').read_text().splitlines() if l.strip()]
     sw = [r for r in rs if r['tag'] == 'sweep']
-    fam = lambda r: 'dense' if r['cfg']['experts'] == 0 and r['cfg']['loops'] == 1 else 'loom'
+    fam = lambda r: 'loom' if r['cfg']['experts'] else ('dense' if r['cfg']['loops'] == 1 else 'looped')
     P, S = {}, {}
     (R / 'site/img').mkdir(parents=True, exist_ok=True)
     for ds in ('mnist', 'cifar'):
         P[ds], S[ds] = {}, {'front': {}, 'all': [r for r in sw if r['dataset'] == ds]}
-        for f in ('dense', 'loom'):
+        for f in ('dense', 'looped', 'loom'):
             v = [r for r in sw if r['dataset'] == ds and fam(r) == f]
             fr = sorted([r for r in v if not any(o['params'] <= r['params'] and o['fid'] <= r['fid'] and (o['params'], o['fid']) != (r['params'], r['fid']) for o in v)], key=lambda r: r['params'])
             P[ds][f] = fr

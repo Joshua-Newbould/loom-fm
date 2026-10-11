@@ -207,6 +207,7 @@
     "finished": "2026-10-11T18:23:20.373606"
    }
   ],
+  "looped": [],
   "loom": [
    {
     "name": "sweep-mnist-loom-d64",
@@ -664,6 +665,49 @@
     "finished": "2026-10-11T16:36:56.450659"
    }
   ],
+  "looped": [
+   {
+    "name": "iter10-looped-dense-l3-s1",
+    "dataset": "cifar",
+    "tag": "sweep",
+    "cfg": {
+     "in_ch": 3,
+     "img": 32,
+     "patch": 2,
+     "dim": 344,
+     "depth": 4,
+     "loops": 3,
+     "heads": 4,
+     "experts": 0,
+     "topk": 2,
+     "expert_mult": 1.0,
+     "res_scale": true,
+     "reinject": true,
+     "loop_residual": true,
+     "per_loop_router": false,
+     "moe_norm": false,
+     "seg": 0,
+     "lam": 0.5,
+     "beta": 0.5,
+     "per_loop_adaln": false,
+     "num_classes": 10
+    },
+    "params": 9001916,
+    "active_params": 26091372,
+    "steps": 10200,
+    "batch": 64,
+    "lr": 0.0003,
+    "seed": 1,
+    "nfe": 50,
+    "fid_n": 10000,
+    "fid": 53.77931437363242,
+    "loss_final": 0.14707708358764648,
+    "train_min": 17.851903386910756,
+    "it_s": 9.522794086183895,
+    "peak_gb": 5.604604244232178,
+    "finished": "2026-10-11T21:46:32.033716"
+   }
+  ],
   "loom": [
    {
     "name": "sweep-cifar-loom-d64",
@@ -830,7 +874,7 @@
     "finished": "2026-10-11T17:23:12.599115"
    },
    {
-    "name": "sweep-cifar-loom-d256",
+    "name": "iter8-loom-paper",
     "dataset": "cifar",
     "tag": "sweep",
     "cfg": {
@@ -842,74 +886,33 @@
      "loops": 3,
      "heads": 4,
      "experts": 8,
-     "topk": 1,
+     "topk": 2,
      "expert_mult": 1.0,
      "res_scale": true,
      "reinject": true,
      "loop_residual": true,
      "per_loop_router": true,
      "moe_norm": true,
-     "seg": 1,
+     "seg": 3,
      "lam": 0.5,
      "beta": 0.5,
      "per_loop_adaln": false,
      "num_classes": 10
     },
     "params": 9223948,
-    "active_params": 10562316,
+    "active_params": 12921612,
     "steps": 10200,
     "batch": 64,
     "lr": 0.0003,
     "seed": 0,
     "nfe": 50,
     "fid_n": 10000,
-    "fid": 72.25118144165879,
-    "loss_final": 0.15020251274108887,
-    "train_min": 14.424294912815094,
-    "it_s": 11.785671398673742,
-    "peak_gb": 4.775059700012207,
-    "finished": "2026-10-11T17:41:35.287384"
-   },
-   {
-    "name": "sweep-cifar-loom-d320",
-    "dataset": "cifar",
-    "tag": "sweep",
-    "cfg": {
-     "in_ch": 3,
-     "img": 32,
-     "patch": 2,
-     "dim": 320,
-     "depth": 4,
-     "loops": 3,
-     "heads": 4,
-     "experts": 8,
-     "topk": 1,
-     "expert_mult": 1.0,
-     "res_scale": true,
-     "reinject": true,
-     "loop_residual": true,
-     "per_loop_router": true,
-     "moe_norm": true,
-     "seg": 1,
-     "lam": 0.5,
-     "beta": 0.5,
-     "per_loop_adaln": false,
-     "num_classes": 10
-    },
-    "params": 14376652,
-    "active_params": 16459212,
-    "steps": 10200,
-    "batch": 64,
-    "lr": 0.0003,
-    "seed": 0,
-    "nfe": 50,
-    "fid_n": 10000,
-    "fid": 64.4976055301201,
-    "loss_final": 0.15022480487823486,
-    "train_min": 19.042211242516835,
-    "it_s": 8.927534614279956,
-    "peak_gb": 5.962134838104248,
-    "finished": "2026-10-11T18:05:42.907917"
+    "fid": 61.696648412324976,
+    "loss_final": 0.1490587294101715,
+    "train_min": 15.592744445800781,
+    "it_s": 10.90250664922441,
+    "peak_gb": 5.440495491027832,
+    "finished": "2026-10-11T19:34:54.999344"
    }
   ]
  }
