@@ -4,42 +4,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>LOOM-FM: looped mixture-of-experts for flow matching</title>
+<title>Looped flow matching: the loop pays, the experts do not</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 <script src="main.js" defer></script>
 </head>
 <body>
 <header>
-  <p class="kicker">A folio on looped mixture-of-experts &middot; MNIST &amp; CIFAR-10</p>
-  <h1>LOOM<i>&times;H</i></h1>
-  <p class="deck">A small flow-matching transformer is run over its own output several times, with a bank of experts shared across passes. Does looping buy image quality more cheaply than width?</p>
+  <p class="kicker">A folio on looped transformers for flow matching &middot; MNIST &amp; CIFAR-10</p>
+  <h1>LOOP<i>&times;H</i></h1>
+  <p class="deck">Run a small flow-matching transformer over its own output two or three times and, on CIFAR-10, it beats a dense network with the same parameters. The loop does the work; the mixture of experts the LOOM paper adds only ties dense.</p>
 </header>
 <main>
   <section>
-    <h2><span>I</span>The idea</h2>
+    <h2><span>I</span>What was looped</h2>
     <div class="body">
-      <p>A stack of <var>M</var> transformer blocks is applied <var>H</var> times in a row. Attention weights and experts are shared by every pass; each pass routes tokens through the experts with a router of its own. Compute grows with recurrence, capacity with sparsity, and the parameter count barely moves.</p>
-      <p><a href="https://arxiv.org/abs/2610.01153">LOOM</a> makes looping stable beyond two passes with a few small devices: residual branches scaled down, the input re-injected at the start of each loop, a moving average of past branch outputs carried across loops and layers, and backpropagation cut into segments, each with its own loss.</p>
-      <p class="eq">&gamma; = &lambda; / (H&thinsp;&radic;M)<br>h &larr; h + &gamma;&middot;RMS(MoE(RMS(h)))<br>h<sub>0</sub><sup>t</sup> = (1 &minus; g<sub>t</sub>)&thinsp;h<sub>M</sub><sup>t&minus;1</sup> + g<sub>t</sub>&thinsp;x</p>
-      <p>Here the language model becomes a JiT-style denoiser: a patch-2 transformer predicts the clean image from a noisy point on the straight path between Gaussian noise and data, and samples are drawn with fifty Euler steps, class-conditional, without guidance.</p>
+      <p>A stack of <var>M</var>&nbsp;=&nbsp;4 transformer blocks, attention and a dense SwiGLU, is applied <var>H</var> times in a row with every weight shared. Compute grows with <var>H</var>; the parameter count does not move. The denoiser is JiT-style: a patch-2 transformer predicts the clean image from a noisy point on the straight path between Gaussian noise and data, and samples take fifty Euler steps, class-conditional, without guidance.</p>
+      <p>From <a href="https://arxiv.org/abs/2610.01153">LOOM</a> we kept the three devices that keep a loop stable: residual branches scaled down by &gamma;, the input re-injected at the start of each loop, and a moving average of past branch outputs carried across loops and layers. Backpropagation runs through every loop.</p>
+      <p class="eq">&gamma; = &lambda; / (H&thinsp;&radic;M), &lambda; = 0.5<br>h &larr; h + &gamma;&middot;FFN(RMS(h))<br>h<sub>0</sub><sup>t</sup> = (1 &minus; g<sub>t</sub>)&thinsp;h<sub>M</sub><sup>t&minus;1</sup> + g<sub>t</sub>&thinsp;x</p>
+      <p>LOOM proper swaps the dense feed-forward for eight experts shared by every pass, routes each token to two of them, and cuts backpropagation into segments, each with its own loss. That is the third family below.</p>
     </div>
   </section>
   <section>
-    <h2><span>II</span>Two fronts</h2>
+    <h2><span>II</span>Three fronts</h2>
     <div class="body">
-      <p>Each family was trained once at a ladder of widths, with one step budget per dataset, and scored by FID on 10,000 samples; lower is better. A point stays on its front only if no smaller model of the same family scores better. Parameters count every expert, active or not.</p>
-      <p>At this budget the loop does not pay. On both datasets the dense front sits at or below LOOM at every size, and the gap is widest for the smallest models. A gain seen on CIFAR-10 in shorter iteration runs did not survive the longer sweep.</p>
+      <p>Each family was trained once at a ladder of widths, with one step budget per dataset, and scored by FID on 10,000 samples; lower is better. A point stays on its front only if no smaller model of the same family scores better. Parameters count every expert, active or not; a looped model has exactly the parameters of a dense one of the same width.</p>
+      <p>On CIFAR-10 the looped front lies below dense at five of six widths, from 94.5 against 107.5 at 0.33M to 53.8 against 62.9 at 9.0M, and misses only at 2.84M. LOOM sits above dense up to 5M and only draws level at 9.2M. On MNIST the loop does not pay: looped dense is slightly worse than dense at every width.</p>
       <div class="charts">
-        <figure id="fig-cifar"><figcaption><b>CIFAR-10</b> <span class="k dense">dense</span> <span class="k loom">LOOM</span> <span class="steps"></span></figcaption></figure>
-        <figure id="fig-mnist"><figcaption><b>MNIST</b> <span class="k dense">dense</span> <span class="k loom">LOOM</span> <span class="steps"></span></figcaption></figure>
+        <figure id="fig-cifar"><figcaption><b>CIFAR-10</b> <span class="k looped">looped dense</span> <span class="k dense">dense</span> <span class="k loom">LOOM</span> <span class="steps"></span></figcaption></figure>
+        <figure id="fig-mnist"><figcaption><b>MNIST</b> <span class="k looped">looped dense</span> <span class="k dense">dense</span> <span class="k loom">LOOM</span> <span class="steps"></span></figcaption></figure>
       </div>
     </div>
   </section>
   <section>
     <h2><span>III</span>Samples</h2>
     <div class="body">
-      <p>Uncurated samples from the smallest and the largest model of each family, one class per row, fifty steps from noise.</p>
+      <p>Uncurated samples from the model of each family nearest nine million parameters, one class per row, fifty steps from noise.</p>
       <h3>CIFAR-10</h3>
       <div class="gallery" id="gal-cifar"></div>
       <h3>MNIST</h3>
@@ -47,19 +47,19 @@
     </div>
   </section>
   <section>
-    <h2><span>IV</span>The recipe</h2>
+    <h2><span>IV</span>Recipe and cost</h2>
     <div class="body">
       <ol>
-        <li>Cut backpropagation after every loop and put a loss on each segment. This was the largest single gain: about 16% lower FID at three loops on CIFAR-10.</li>
-        <li>CIFAR-10 prefers three loops, eight experts and top-1 routing; MNIST two loops, eight experts and top-2.</li>
-        <li>Keep &lambda; = &beta; = 0.5, depth four, all five LOOM components on.</li>
+        <li>Loop a dense depth-4 stack twice, with residual scaling, re-injection and the loop residual on, and no experts. At 9.0M on CIFAR-10 three seeds give 58.0, 55.3 and 54.8 against 62.9 for dense; three loops give 56.1 and 53.8.</li>
+        <li>The price is wall-clock, not parameters. For 10,200 steps dense trains in 6.1 minutes, two loops in 12.0, three loops in 17.9 and paper LOOM in 15.6. The comparison is at matched parameters, not matched compute.</li>
+        <li>The experts add little. Paper LOOM, eight experts with top-2 routing and three loops, scores 61.7 and 63.6 on two seeds at 9.2M, level with dense; experts without the loop do worse than dense.</li>
         <li>Did not help: a separate adaLN per loop, &lambda; of 1.0 or 0.25, &beta; of 0.9. Four loops did not fit the shared GPU&rsquo;s memory cap.</li>
       </ol>
     </div>
   </section>
 </main>
 <footer>
-  <p>One seed per point, batch 64, trained on a single shared RTX&nbsp;4080&nbsp;SUPER. Set in your system&rsquo;s serif and monospace; nothing is fetched from elsewhere. Data generated <span id="gen"></span>.</p>
+  <p>One seed per point, batch 64, trained on a single shared RTX&nbsp;4080&nbsp;SUPER; the 9.0M looped CIFAR-10 point is the best of five seeded runs. Set in your system&rsquo;s serif and monospace; nothing is fetched from elsewhere. Data generated <span id="gen"></span>.</p>
 </footer>
 </body>
 </html>
