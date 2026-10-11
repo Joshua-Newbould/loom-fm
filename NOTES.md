@@ -6,10 +6,16 @@
 - Fixed in train.py: GPU wait now inside the flock and repeated before sampling (excluding own reserved memory); batch asserted <= 256; sample bs 250.
 
 ## best
-| dataset | params | fid | flags |
-|---|---|---|---|
-| cifar | 9223948 | 133.8 | dim 256 depth 4 loops 3 experts 8 topk 1, all 5 components, seg 1 (explicit flags, not --loom), 3400 steps b64 (iter7; 2.4% better than topk 2 137.05, 20% better than dense 167.8) |
-| mnist | 9211652 | 187.2 | dim 256 depth 4 loops 2 experts 8 topk 2, all 5 components, seg 1, 1400 steps b64 (iter6; 0.9% better than dense 188.8, within noise) |
+| dataset | budget | params | fid | flags |
+|---|---|---|---|---|
+| cifar | sweep 10200 b64 | 9001916 | 53.78 | looped dense dim 344 loops 3 seed 1 (iter10-looped-dense-l3-s1, 17.9 min); seed 0 56.10 |
+| cifar | sweep 10200 b64 | 9001916 | 54.82 | looped dense dim 344 loops 2 seed 2 (iter10-looped-dense-l2-s2, 12.0 min); seeds 0/1 58.0/55.3 |
+| cifar | sweep 10200 b64 | 9001916 | 55.30 | looped dense dim 344 loops 2, seed 1 (iter9-looped-dense-l2-s1, 12.0 min); seed 0 below |
+| cifar | sweep 10200 b64 | 9001916 | 56.10 | looped dense dim 344 loops 3 (iter9-looped-dense-l3, 17.9 min), single seed |
+| cifar | sweep 10200 b64 | 9001916 | 57.98 | looped dense dim 344 depth 4 loops 2 experts 0, res_scale reinject loop_residual (iter8-looped-dense-l2, 12.0 min; dense d344 62.9 at 6.1 min), single seed |
+| cifar | sweep 10200 b64 | 9223948 | 61.7 | paper LOOM: dim 256 loops 3 experts 8 topk 2 seg 3 --loom (iter8-loom-paper, 15.6 min), single seed |
+| cifar | quick 3400 b64 | 9223948 | 133.8 | dim 256 depth 4 loops 3 experts 8 topk 1 seg 1 (iter7; short-horizon only) |
+| mnist | quick 1400 b64 | 9211652 | 187.2 | dim 256 depth 4 loops 2 experts 8 topk 2 seg 1 (iter6; within noise of dense) |
 
 ## iter 1
 hypothesis: full LOOM (3 loops, 8 experts top-2, all five components, seg 3) beats a dense net of matched total params (~9.0-9.2M) at equal steps and batch.
@@ -45,3 +51,26 @@ next: iter7: cifar loops 3 seg 1 with topk 1 or experts 4 with expert_mult 2; mn
 hypothesis: fewer active experts per token (topk 1) or fewer, wider experts (4 x mult 2) help at loops 3 seg 1.
 result: cifar 3400 steps b64, 9.22M: topk 1 fid 133.81 (iter7-l3-seg1-topk1, 4.8 min; vs 137.05, 2.4% better, below 3%, best row updated). Cifar experts 4 mult 2 OOMs under the 0.4 memory fraction (6.2 GiB), no result. Mnist loops 2 seg 1 experts 4 mult 2 (9.20M) fid 190.13 (iter7-mnist-l2-seg1-e4m2; vs 187.15 best, worse). Single seed. Iters 5, 6, 7 each improved no best by >= 3%: stopping rule holds.
 next:
+
+## iter 8
+hypothesis: the quick-budget winner (seg 1, top-1) is a short-horizon bias: detach speeds early loss but caps long-run quality, so at 10200 steps full backprop (paper seg 3) and a looped dense net should beat dense d344 (62.9, 6.1 min).
+result: cifar 10200 b64 fid-n 10000: paper loom seg 3 top-2 loops 3 9.22M fid 61.7, 15.6 min (iter8-loom-paper); looped dense d344 loops 2 9.00M fid 57.98, 12.0 min (iter8-looped-dense-l2); 4 experts mult 2 loops 2 seg 1 9.21M fid 63.2, 10.5 min (iter8-e4m2-l2). Two of three beat dense 62.9 (single seed, noise unknown); looped dense is best at about 2x dense wall-clock.
+next: iter9: second seed (seed 1) of iter8-looped-dense-l2 and of iter8-loom-paper; plus looped dense loops 3.
+
+## iter 9
+hypothesis: the iter8 gains hold across seeds: looped dense loops 2 and paper LOOM at 10200 steps beat dense d344 (62.9), and loops 3 helps looped dense.
+result: cifar 10200 b64 fid-n 10000: looped dense l2 seed 1 9.00M fid 55.30, 12.0 min (iter9-looped-dense-l2-s1; seed 0 57.98, gap 2.7); paper LOOM seed 1 9.22M fid 63.55, 15.6 min (iter9-loom-paper-s1; seed 0 61.7, gap 1.9, but seed 1 is above 62.9); looped dense loops 3 9.00M fid 56.10, 17.9 min (iter9-looped-dense-l3, seed 0). Looped dense beats dense on both seeds (mean 56.6) at 2x wall-clock; paper LOOM is about equal to dense (mean 62.6). Stopping rule not met: the looped dense gap is 2.7 (>2) and the LOOM seed 1 does not beat 62.9.
+next: iter10: seed 2 of iter8-looped-dense-l2 and seed 1 of iter9-looped-dense-l3 to settle the seed gap; seed 2 of the paper LOOM if budget allows.
+
+## iter 10
+hypothesis: the looped dense gain over dense d344 (62.9, 6.1 min) is real across seeds, not a lucky seed.
+result: cifar 10200 b64 fid-n 10000, 9.00M: looped dense loops 2 seed 2 fid 54.82, 12.0 min (iter10-looped-dense-l2-s2; seeds 0/1/2: 57.98/55.30/54.82, mean 56.0, seeds 1 and 2 within 0.5); looped dense loops 3 seed 1 fid 53.78, 17.9 min (iter10-looped-dense-l3-s1; seeds 0/1: 56.10/53.78, gap 2.3, mean 54.9). Every looped dense run (5 of 5) beats 62.9, at 2x (loops 2) to 3x (loops 3) dense wall-clock. Paper LOOM (61.7/63.55) and the 4-expert variant (63.2) do not clearly beat dense. Stopping rule holds: looped dense beats 62.9 at 9.0M with a second seed within 2 FID (l2 seeds 1/2).
+next:
+
+## promote
+- iter10-looped-dense-l3-s1 (CIFAR looped front at 9.00M: 53.78)
+- iter10-looped-dense-l2-s2 (CIFAR looped front at 9.00M: 54.82)
+- iter8-loom-paper (CIFAR LOOM front at 9.22M: 61.7 vs 72.3)
+- iter8-looped-dense-l2 (CIFAR looped front at 9.00M: 57.98)
+- iter9-looped-dense-l3 (CIFAR looped front at 9.00M: 56.10)
+- iter9-looped-dense-l2-s1 (CIFAR looped front at 9.00M: 55.30)
