@@ -7,3 +7,4 @@ data/
 .gpu.lock
 .pyramid/pids
 .selfcheck_tmp/
+queue2.log
