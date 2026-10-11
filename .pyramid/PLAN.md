@@ -31,6 +31,7 @@ routing basis: routing.md derived 2026-10-11; observed.md 115 entries; overrides
 |---|---|---|---|
 | 1 | gates, model, train, review, loop(x10), sweep, site | nodes ~5.2, orchestrator ~2.5 | one run; stop at 1.5x = 11.5 |
 | 2 | loop2 (x3, CIFAR at the sweep budget) | nodes ~1.5 | extension after the quick-budget recipe lost at 3x budget; unforeseen by the plan, flagged to the user at 16:10 with the extension as the default |
+| 3 | sweep2 (looped-dense ladders), site2 (opus) | nodes ~1.5 | third family on both datasets, site rewritten for the new headline |
 
 | id | task_type | agent | model | effort | depends_on | explore | gate |
 |---|---|---|---|---|---|---|---|
@@ -54,3 +55,4 @@ Gate still failing after escalation; unforeseen review blocker; contract problem
 | run | started | passed/total | re-runs | escalations | nodes USD | orchestrator USD | wall clock | notes |
 |---|---|---|---|---|---|---|---|---|
 | 1 | 2026-10-11T13:30+01:00 | 7/7 | 0 | 0 | 5.85 | pending (recorded on the last run) | 5.6 h | transcript wf_ac05b872-dbc; loop stopped at iter 7 by its rule; sweep 24 runs; research outcome negative at 3x budget (LOOM behind dense on both datasets), so run 2 extends the loop at the sweep budget |
+| 2 | 2026-10-11T19:15+01:00 | 1/1 | 0 | 0 | 1.57 | pending | 2.5 h | transcript wf_cef52842-c40; loop2 iters 8-10 at the sweep budget: looped dense (no experts, loops 2-3) beats dense d344 on CIFAR on 5/5 runs (53.8 to 58.0 vs 62.9), paper LOOM ties (61.7, 63.6); family rule extended to dense/looped/loom and six runs promoted to the sweep |
